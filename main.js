@@ -462,23 +462,51 @@ function drawMap(canvas, scenario) {
         console.error('Canvas not found');
         return;
     }
-
+    
     const ctx = canvas.getContext('2d');
     const width = canvas.width;
     const height = canvas.height;
-
+    
+    // Clear canvas
     ctx.fillStyle = '#1a1a2e';
     ctx.fillRect(0, 0, width, height);
 
+    // Figure out where the map image will be drawn (preserve aspect ratio)
+    let drawWidth = width;
+    let drawHeight = height;
+    let offsetX = 0;
+    let offsetY = 0;
+
     if (mapImageLoaded && worldMapImage) {
+        const imgW = worldMapImage.width;
+        const imgH = worldMapImage.height;
+        const imgAspect = imgW / imgH;
+        const canvasAspect = width / height;
+
+        if (canvasAspect > imgAspect) {
+            // Canvas is wider than image → fit height, letterbox left/right
+            drawHeight = height;
+            drawWidth = height * imgAspect;
+            offsetX = (width - drawWidth) / 2;
+            offsetY = 0;
+        } else {
+            // Canvas is taller than image → fit width, letterbox top/bottom
+            drawWidth = width;
+            drawHeight = width / imgAspect;
+            offsetX = 0;
+            offsetY = (height - drawHeight) / 2;
+        }
+
+        // Draw world map image with correct proportions
         ctx.globalAlpha = 0.5;
-        ctx.drawImage(worldMapImage, 0, 0, width, height);
+        ctx.drawImage(worldMapImage, offsetX, offsetY, drawWidth, drawHeight);
         ctx.globalAlpha = 1.0;
     }
 
+    // Filter data for current year + scenario
     const filteredData = data.filter(d => d.year === currentYear && d.scenario === scenario);
     console.log(`Drawing ${scenario} for ${currentYear}:`, filteredData.length, 'points');
-
+    
     if (filteredData.length === 0) {
         console.warn('No data to display for', scenario, currentYear);
         ctx.fillStyle = 'white';
@@ -486,23 +514,29 @@ function drawMap(canvas, scenario) {
         ctx.fillText(`No data for ${scenario} ${currentYear}`, 20, 60);
         return;
     }
-
-    // Draw data points with transparency
+    
+    // Draw data points with transparency, aligned to the drawn map area
     filteredData.forEach(point => {
         let lon = point.lon;
-        if (lon > 180) lon -= 360;
 
-        const x = ((lon + 180) / 360) * width;
-        const y = ((90 - point.lat) / 180) * height;
+        // If data uses 0–360 longitudes, convert to -180–180
+        if (lon > 180) {
+            lon -= 360;
+        }
+
+        // Map lon/lat into the map image box (not the full canvas)
+        const x = offsetX + ((lon + 180) / 360) * drawWidth;       // -180 → left of map, +180 → right
+        const y = offsetY + ((90 - point.lat) / 180) * drawHeight; // +90 → top of map, -90 → bottom
+
         const size = Math.max(1, width / 288);
-
         const color = getColor(point.pr_mm_day);
         const transparentColor = color.replace('rgb', 'rgba').replace(')', ', 0.25)');
 
         ctx.fillStyle = transparentColor;
         ctx.fillRect(x - size / 2, y - size / 2, size, size);
     });
-
+    
+    // Draw scenario label
     ctx.fillStyle = 'white';
     ctx.font = 'bold 24px Arial';
     ctx.shadowColor = 'rgba(0,0,0,0.8)';
@@ -510,6 +544,7 @@ function drawMap(canvas, scenario) {
     ctx.fillText(scenario.toUpperCase(), 20, 40);
     ctx.shadowBlur = 0;
 }
+
 
 function updateMaps() {
     console.log('Updating maps for year:', currentYear);
