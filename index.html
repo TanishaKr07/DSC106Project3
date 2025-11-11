@@ -1,48 +1,47 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>SSP Precipitation Swipe</title>
-  <link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Climate Data Comparison Map</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div id="load-container">
-    <div id="load-bar"></div>
-    <span id="load-label">Loading 0%</span>
-  </div>
+    <div class="container">
+        <div class="header">
+            <h1>Climate Precipitation Comparison</h1>
+            <div class="controls">
+                <div class="year-control">
+                    <span class="year-label">Year: <span id="yearDisplay">2015</span></span>
+                    <input type="range" id="yearSlider" min="0" max="17" value="0" class="slider">
+                    <div class="year-buttons">
+                        <button id="prevYear" class="btn">◀</button>
+                        <button id="nextYear" class="btn">▶</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-  <div id="controls">
-    <label>
-      Scenario A
-      <select id="scenarioA">
-        <option value="ssp126">ssp126</option>
-        <option value="ssp245">ssp245</option>
-      </select>
-    </label>
-    <label>
-      Scenario B
-      <select id="scenarioB">
-        <option value="ssp245">ssp245</option>
-        <option value="ssp126">ssp126</option>
-      </select>
-    </label>
-    <label>
-      Year
-      <input id="yearSlider" type="range">
-      <span id="yearLabel"></span>
-    </label>
-    <button id="play">Play</button>
-    <span id="status"></span>
-  </div>
+        <div id="mapContainer" class="map-container">
+            <canvas id="canvasLeft" width="1200" height="600"></canvas>
+            <div id="rightMapContainer" class="right-map">
+                <canvas id="canvasRight" width="1200" height="600"></canvas>
+            </div>
+            <div id="sliderLine" class="slider-line">
+                <div class="slider-handle"></div>
+            </div>
+        </div>
 
-  <div id="map-container">
-    <canvas id="map-bottom"></canvas>
-    <canvas id="map-top"></canvas>
-    <div id="swipe-handle"></div>
-    <input id="swipe" type="range" min="0" max="100" value="50">
-  </div>
+        <div class="legend">
+            <span class="legend-label">Low Precipitation</span>
+            <div id="colorScale" class="color-scale"></div>
+            <span class="legend-label">High Precipitation</span>
+        </div>
+        <div class="instruction">
+            Drag the slider to compare SSP126 (left) and SSP245 (right) scenarios
+        </div>
+    </div>
 
-  <script src="https://d3js.org/d3.v7.min.js"></script>
-  <script src="script.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
