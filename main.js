@@ -251,15 +251,20 @@ function updateYearButtons() {
 function getColor(value) {
     const min = 0.1;
     const max = 1.5;
-    const normalized = Math.max(0, Math.min(1, (value - min) / (max - min)));
-    
-    // White (255, 255, 255) to Blue (0, 0, 255)
-    const r = Math.floor(255 * (1 - normalized));
-    const g = Math.floor(255 * (1 - normalized));
-    const b = 255; // Always full blue
-    
+    const t = Math.max(0, Math.min(1, (value - min) / (max - min)));
+
+    // t = 0 → low precip → light blue
+    // t = 1 → high precip → white
+    const low = { r: 173, g: 216, b: 230 }; // light blue
+    const high = { r: 255, g: 255, b: 255 }; // white
+
+    const r = Math.round(low.r + (high.r - low.r) * t);
+    const g = Math.round(low.g + (high.g - low.g) * t);
+    const b = Math.round(low.b + (high.b - low.b) * t);
+
     return `rgb(${r}, ${g}, ${b})`;
 }
+
 
 function drawMap(canvas, scenario) {
     if (!canvas) {
