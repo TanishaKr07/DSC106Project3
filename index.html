@@ -1,56 +1,51 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>D3 Swipe Compare (One CSV, Two Scenarios)</title>
-  <link rel="stylesheet" href="styles.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Climate Data Comparison Map</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="wrap">
-    <div class="panel">
-      <h1>Swipe Compare — Two Scenarios from One CSV</h1>
-      <div class="controls">
-        <label>Left:
-          <select id="selA"></select>
-        </label>
-        <label>Right:
-          <select id="selB"></select>
-        </label>
-        <button class="btn" id="play">▶ Play</button>
-        <label>Year:&nbsp;<strong id="yearLabel">—</strong></label>
-        <input id="yearSlider" type="range" min="0" max="1" step="1" value="0" />
-        <span class="spacer"></span>
-        <label>Point size:
-          <input id="ptSize" type="range" min="0.5" max="3.5" step="0.5" value="1.6" />
-        </label>
-        <label style="margin-left:8px;">Opacity:
-          <input id="ptAlpha" type="range" min="0.1" max="1" step="0.1" value="0.85" />
-        </label>
-      </div>
+    <div class="container">
+        <div class="header">
+            <h1>Climate Precipitation Comparison</h1>
+            <div class="controls">
+                <div class="year-control">
+                    <span class="year-label">Year: <span id="yearDisplay">2015</span></span>
+                    <input type="range" id="yearSlider" min="0" max="17" value="0" class="slider">
+                    <div class="year-buttons">
+                        <button id="prevYear" class="btn">◀</button>
+                        <button id="nextYear" class="btn">▶</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-      <div class="vis" id="vis">
-        <div class="badge badgeA" id="labelA">Left</div>
-        <div class="badge badgeB" id="labelB">Right</div>
-        <div class="tooltip" id="tooltip"></div>
+        <div id="mapContainer" class="map-container">
+            <div class="canvas-wrapper">
+                <canvas id="canvasLeft"></canvas>
+            </div>
+            <div id="rightMapContainer" class="right-map">
+                <div class="canvas-wrapper">
+                    <canvas id="canvasRight"></canvas>
+                </div>
+            </div>
+            <div id="sliderLine" class="slider-line">
+                <div class="slider-handle"></div>
+            </div>
+        </div>
 
-        <svg
-          class="basemap"
-          id="basemap"
-          viewBox="0 0 1000 560"
-          role="img"
-          aria-label="World basemap">
-        </svg>
-
-        <!-- canvases injected below -->
-        <div class="divider" id="divider"></div>
-        <div class="handle" id="handle"></div>
-      </div>
+        <div class="legend">
+            <span class="legend-label">Low Precipitation</span>
+            <div id="colorScale" class="color-scale"></div>
+            <span class="legend-label">High Precipitation</span>
+        </div>
+        <div class="instruction">
+            Drag the slider to compare SSP126 (left) and SSP245 (right) scenarios
+        </div>
     </div>
-  </div>
 
-  <script src="https://unpkg.com/d3@7"></script>
-  <script src="https://unpkg.com/topojson-client@3"></script>
-  <script src="main.js"></script>
+    <script src="main.js"></script>
 </body>
 </html>
