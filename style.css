@@ -30,7 +30,7 @@ h1 {
   flex-wrap:wrap;
   gap:12px;
   align-items:center;
-  margin:8px 0;
+  margin:12px 0 8px;
 }
 
 .controls label {
@@ -57,7 +57,7 @@ h1 {
 }
 
 input[type="range"] {
-  width:220px;
+  width:240px;
 }
 
 select {
@@ -86,7 +86,7 @@ svg.basemap {
   z-index:0;
 }
 
-/* Two maps on top of each other */
+/* Both maps are stacked in the same place */
 canvas.layer {
   position:absolute;
   left:0;
@@ -95,7 +95,7 @@ canvas.layer {
   pointer-events:none;
 }
 
-/* Right map is clipped; JS updates the inset() value */
+/* Right map is clipped; JS moves the left inset */
 .layerB {
   clip-path: inset(0 0 0 50%);
 }
