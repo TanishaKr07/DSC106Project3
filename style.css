@@ -235,3 +235,19 @@ canvas {
     fill: rgba(255, 255, 255, 0.2);
     stroke-width: 1.5;
 }
+
+#tooltip {
+    position: absolute;
+    background-color: #111827;
+    color: #f9fafb;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    pointer-events: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    border: 1px solid #4b5563;
+    display: none;
+    z-index: 100;
+    white-space: nowrap;
+}
+
