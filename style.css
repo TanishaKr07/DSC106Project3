@@ -8,17 +8,18 @@ body {
     font-family: Arial, sans-serif;
     background-color: #1a1a2e;
     color: white;
-    overflow: hidden;
-    width: 100vw;
-    height: 100vh;
+    margin: 0;
+    overflow-y: auto;   /* allow vertical scrolling */
 }
+
 
 .container {
     display: flex;
     flex-direction: column;
-    height: 100vh;
-    width: 100vw;
+    min-height: 100vh;  /* can grow taller than the screen */
+    width: 100%;
 }
+
 
 .header {
     background-color: #2d2d44;
