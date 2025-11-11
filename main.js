@@ -298,7 +298,7 @@ function drawMap(canvas, scenario) {
     filteredData.forEach(point => {
         const x = (point.lon / 360) * width;
         const y = ((90 - point.lat) / 180) * height;
-        const size = Math.max(1, width / 288); // Made points much smaller (was 144, now 288)
+        const size = Math.max(1, width / 400); // Made points much smaller (was 144, now 288)
         
         const color = getColor(point.pr_mm_day);
         // Add transparency (0.7 = 70% opacity - higher so colors show better)
