@@ -84,7 +84,7 @@ function loadWorldMapImage() {
         updateMaps();
     };
     // Using a public domain world map
-    worldMapImage.src = 'https://upload.wikimedia.org/wikipedia/commons/a/a1/BlankMap-World.svg';
+    worldMapImage.src = 'worldImage.png';
 }
 
 // Load CSV file
