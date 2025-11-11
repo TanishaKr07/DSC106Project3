@@ -269,7 +269,9 @@ function drawMap(canvas, scenario) {
     
     // Draw data points
     filteredData.forEach(point => {
-        const x = ((point.lon + 180) / 360) * width;
+        // Handle longitude: if your data is 0-360, convert it properly
+        const lon = point.lon > 180 ? point.lon - 360 : point.lon; // Convert 0-360 to -180-180 if needed
+        const x = ((lon + 180) / 360) * width;
         const y = ((90 - point.lat) / 180) * height;
         const size = Math.max(2, width / 144); // Smaller points for better detail
         
