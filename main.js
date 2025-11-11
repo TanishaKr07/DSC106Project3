@@ -36,20 +36,16 @@ function init() {
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
     
-    // Generate data
-    generateSampleData();
-    console.log('Data generated:', data.length, 'points');
-    
     // Setup event listeners
     setupEventListeners();
     
     // Draw color scale
     drawColorScale();
     
-    // Update maps
-    updateMaps();
+    // Load the actual CSV file
+    loadCSV('precip_5yr_cesm2waccm_ncar.csv');
     
-    console.log('Initialization complete');
+    console.log('Initialization started, loading data...');
 }
 
 function resizeCanvas() {
@@ -71,38 +67,44 @@ function resizeCanvas() {
     }
 }
 
-// Generate sample data
-function generateSampleData() {
-    data = [];
-    const scenarios = ['ssp126', 'ssp245'];
-    
-    years.forEach(year => {
-        scenarios.forEach(scenario => {
-            for (let lat = -90; lat <= 90; lat += 5) {
-                for (let lon = -180; lon < 180; lon += 5) {
-                    const baseValue = 0.17 + (Math.sin(lat * Math.PI / 180) + 1) * 0.3;
-                    const yearFactor = scenario === 'ssp245' ? (year - 2015) / 850 : (year - 2015) / 1700;
-                    const lonFactor = Math.cos(lon * Math.PI / 180) * 0.1;
-                    const value = baseValue + yearFactor + lonFactor + Math.random() * 0.05;
-                    data.push({ year, lat, lon, pr_mm_day: value, scenario });
-                }
-            }
-        });
-    });
-}
-
-// Load CSV file (uncomment and use this when you have your actual data file)
-/*
+// Load CSV file
 async function loadCSV(filePath) {
     try {
         console.log('Loading CSV from:', filePath);
+        
+        // Show loading message
+        const ctxLeft = canvasLeft.getContext('2d');
+        const ctxRight = canvasRight.getContext('2d');
+        
+        ctxLeft.fillStyle = '#1a1a2e';
+        ctxLeft.fillRect(0, 0, canvasLeft.width, canvasLeft.height);
+        ctxLeft.fillStyle = 'white';
+        ctxLeft.font = '20px Arial';
+        ctxLeft.fillText('Loading data...', 20, 40);
+        
+        ctxRight.fillStyle = '#1a1a2e';
+        ctxRight.fillRect(0, 0, canvasRight.width, canvasRight.height);
+        ctxRight.fillStyle = 'white';
+        ctxRight.font = '20px Arial';
+        ctxRight.fillText('Loading data...', 20, 40);
+        
         const response = await fetch(filePath);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const csvText = await response.text();
         const lines = csvText.trim().split('\n');
         
+        console.log('CSV loaded, parsing', lines.length, 'lines...');
+        
         data = [];
+        // Skip header line (index 0)
         for (let i = 1; i < lines.length; i++) {
-            const values = lines[i].split(',');
+            const line = lines[i].trim();
+            if (!line) continue;
+            
+            const values = line.split(',');
             if (values.length >= 5) {
                 data.push({
                     year: parseInt(values[0]),
@@ -114,14 +116,36 @@ async function loadCSV(filePath) {
             }
         }
         
-        console.log('CSV loaded:', data.length, 'rows');
+        console.log('CSV parsed successfully:', data.length, 'data points');
+        
+        // Log sample data to verify
+        console.log('Sample data point:', data[0]);
+        console.log('Unique years:', [...new Set(data.map(d => d.year))]);
+        console.log('Unique scenarios:', [...new Set(data.map(d => d.scenario))]);
+        
         updateMaps();
     } catch (error) {
         console.error('Error loading CSV:', error);
+        
+        // Show error message on canvas
+        const ctxLeft = canvasLeft.getContext('2d');
+        const ctxRight = canvasRight.getContext('2d');
+        
+        ctxLeft.fillStyle = '#1a1a2e';
+        ctxLeft.fillRect(0, 0, canvasLeft.width, canvasLeft.height);
+        ctxLeft.fillStyle = 'red';
+        ctxLeft.font = '16px Arial';
+        ctxLeft.fillText('Error loading data file!', 20, 40);
+        ctxLeft.fillText('Check console for details', 20, 65);
+        
+        ctxRight.fillStyle = '#1a1a2e';
+        ctxRight.fillRect(0, 0, canvasRight.width, canvasRight.height);
+        ctxRight.fillStyle = 'red';
+        ctxRight.font = '16px Arial';
+        ctxRight.fillText('Error loading data file!', 20, 40);
+        ctxRight.fillText('Check console for details', 20, 65);
     }
 }
-// Uncomment to use: loadCSV('your-data.csv');
-*/
 
 function setupEventListeners() {
     // Year controls
@@ -232,10 +256,13 @@ function drawMap(canvas, scenario) {
     
     // Filter data
     const filteredData = data.filter(d => d.year === currentYear && d.scenario === scenario);
-    console.log(`Drawing ${scenario}:`, filteredData.length, 'points');
+    console.log(`Drawing ${scenario} for ${currentYear}:`, filteredData.length, 'points');
     
     if (filteredData.length === 0) {
         console.warn('No data to display for', scenario, currentYear);
+        ctx.fillStyle = 'white';
+        ctx.font = '16px Arial';
+        ctx.fillText(`No data for ${scenario} ${currentYear}`, 20, 60);
         return;
     }
     
@@ -243,7 +270,7 @@ function drawMap(canvas, scenario) {
     filteredData.forEach(point => {
         const x = ((point.lon + 180) / 360) * width;
         const y = ((90 - point.lat) / 180) * height;
-        const size = Math.max(2, width / 72);
+        const size = Math.max(2, width / 144); // Smaller points for better detail
         
         ctx.fillStyle = getColor(point.pr_mm_day);
         ctx.fillRect(x - size/2, y - size/2, size, size);
