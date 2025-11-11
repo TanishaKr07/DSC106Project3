@@ -21,6 +21,9 @@ const swipe = document.getElementById('swipe');
 const handle = document.getElementById('swipe-handle');
 const playBtn = document.getElementById('play');
 const statusEl = document.getElementById('status');
+const loadBar = document.getElementById('load-bar');
+const loadLabel = document.getElementById('load-label');
+const loadContainer = document.getElementById('load-container');
 
 let dataByScenarioYear;
 let years;
@@ -86,6 +89,43 @@ function togglePlay() {
   }, 800);
 }
 
+function loadCsvWithProgress(url) {
+  return fetch(url).then(resp => {
+    if (!resp.ok) throw new Error('Network error');
+    const len = +resp.headers.get('Content-Length') || 0;
+    if (!resp.body || !len) {
+      loadBar.style.width = '100%';
+      loadLabel.textContent = 'Parsing...';
+      return resp.text();
+    }
+    const reader = resp.body.getReader();
+    const chunks = [];
+    let received = 0;
+    function pump() {
+      return reader.read().then(result => {
+        if (result.done) return;
+        chunks.push(result.value);
+        received += result.value.length;
+        const pct = Math.max(0, Math.min(100, Math.round((received / len) * 100)));
+        loadBar.style.width = pct + '%';
+        loadLabel.textContent = 'Loading ' + pct + '%';
+        return pump();
+      });
+    }
+    return pump().then(() => {
+      const decoder = new TextDecoder('utf-8');
+      let text = '';
+      chunks.forEach(c => {
+        text += decoder.decode(c, { stream: true });
+      });
+      text += decoder.decode();
+      loadBar.style.width = '100%';
+      loadLabel.textContent = 'Parsing...';
+      return text;
+    });
+  });
+}
+
 swipe.addEventListener('input', updateSwipe);
 scenarioASelect.addEventListener('change', redraw);
 scenarioBSelect.addEventListener('change', redraw);
@@ -93,31 +133,38 @@ yearSlider.addEventListener('input', redraw);
 playBtn.addEventListener('click', togglePlay);
 
 updateSwipe();
-
 statusEl.textContent = 'Loading full dataset...';
 
-d3.csv('precip_5yr_cesm2waccm_ncar.csv').then(raw => {
-  raw.forEach(d => {
-    d.year = +d.year;
-    d.lat = +d.lat;
-    d.lon = +d.lon;
-    d.pr_mm_day = +d.pr_mm_day;
+loadCsvWithProgress('precip_5yr_cesm2waccm_ncar.csv')
+  .then(text => {
+    const raw = d3.csvParse(text);
+    raw.forEach(d => {
+      d.year = +d.year;
+      d.lat = +d.lat;
+      d.lon = +d.lon;
+      d.pr_mm_day = +d.pr_mm_day;
+    });
+
+    dataByScenarioYear = d3.group(raw, d => d.scenario, d => d.year);
+    years = Array.from(new Set(raw.map(d => d.year))).sort((a, b) => a - b);
+
+    yearSlider.min = years[0];
+    yearSlider.max = years[years.length - 1];
+    yearSlider.step = years[1] - years[0];
+    yearSlider.value = years[0];
+    yearLabel.textContent = years[0];
+
+    statusEl.textContent =
+      'Loaded ' + raw.length + ' rows, ' +
+      years.length + ' years, ' +
+      Array.from(dataByScenarioYear.keys()).join(', ') + '.';
+
+    loadContainer.style.display = 'none';
+
+    redraw();
+  })
+  .catch(err => {
+    console.error(err);
+    statusEl.textContent = 'Error loading data (see console).';
+    loadLabel.textContent = 'Error';
   });
-
-  dataByScenarioYear = d3.group(raw, d => d.scenario, d => d.year);
-
-  years = Array.from(new Set(raw.map(d => d.year))).sort((a, b) => a - b);
-
-  yearSlider.min = years[0];
-  yearSlider.max = years[years.length - 1];
-  yearSlider.step = years[1] - years[0];
-  yearSlider.value = years[0];
-  yearLabel.textContent = years[0];
-
-  statusEl.textContent = '';
-
-  redraw();
-}).catch(err => {
-  statusEl.textContent = 'Error loading data';
-  console.error(err);
-});
