@@ -498,7 +498,7 @@ function drawMap(canvas, scenario) {
         }
 
         // Draw world map image with correct proportions
-        ctx.globalAlpha = 0.5;
+        ctx.globalAlpha = 0.6;
         ctx.drawImage(worldMapImage, offsetX, offsetY, drawWidth, drawHeight);
         ctx.globalAlpha = 1.0;
     }
@@ -515,28 +515,27 @@ function drawMap(canvas, scenario) {
         return;
     }
     
-    // Draw data points with transparency, aligned to the drawn map area
+    // Draw data points with small, faint circles so the map shows through
     filteredData.forEach(point => {
         let lon = point.lon;
+        if (lon > 180) lon -= 360;
 
-        // If data uses 0–360 longitudes, convert to -180–180
-        if (lon > 180) {
-            lon -= 360;
-        }
+        const x = offsetX + ((lon + 180) / 360) * drawWidth;
+        const y = offsetY + ((90 - point.lat) / 180) * drawHeight;
 
-        // Map lon/lat into the map image box (not the full canvas)
-        const x = offsetX + ((lon + 180) / 360) * drawWidth;       // -180 → left of map, +180 → right
-        const y = offsetY + ((90 - point.lat) / 180) * drawHeight; // +90 → top of map, -90 → bottom
+        // much smaller dots now
+        const size = Math.max(0.5, width / 900);
 
-        const size = Math.max(1, width / 288);
         const color = getColor(point.pr_mm_day);
-        const transparentColor = color.replace('rgb', 'rgba').replace(')', ', 0.25)');
+        const transparentColor = color.replace('rgb', 'rgba').replace(')', ', 0.18)');
 
         ctx.fillStyle = transparentColor;
-        ctx.fillRect(x - size / 2, y - size / 2, size, size);
+        ctx.beginPath();
+        ctx.arc(x, y, size / 2, 0, 2 * Math.PI);
+        ctx.fill();
     });
     
-    // Draw scenario label
+    // Scenario label
     ctx.fillStyle = 'white';
     ctx.font = 'bold 24px Arial';
     ctx.shadowColor = 'rgba(0,0,0,0.8)';
@@ -544,6 +543,7 @@ function drawMap(canvas, scenario) {
     ctx.fillText(scenario.toUpperCase(), 20, 40);
     ctx.shadowBlur = 0;
 }
+
 
 
 function updateMaps() {
