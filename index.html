@@ -10,6 +10,7 @@
   <div class="wrap">
     <div class="panel">
       <h1>Swipe Compare — Two Scenarios from One CSV</h1>
+
       <div class="controls">
         <label>Left:
           <select id="selA"></select>
@@ -17,10 +18,14 @@
         <label>Right:
           <select id="selB"></select>
         </label>
+
         <button class="btn" id="play">▶ Play</button>
+
         <label>Year:&nbsp;<strong id="yearLabel">—</strong></label>
         <input id="yearSlider" type="range" min="0" max="1" step="1" value="0" />
+
         <span class="spacer"></span>
+
         <label>Point size:
           <input id="ptSize" type="range" min="0.5" max="3.5" step="0.5" value="1.6" />
         </label>
@@ -29,12 +34,25 @@
         </label>
       </div>
 
+      <!-- Swipe slider (controls how much of the RIGHT map is visible) -->
+      <div class="controls">
+        <label>Reveal right map:
+          <input id="swipeSlider" type="range" min="0" max="100" step="1" value="50" />
+        </label>
+      </div>
+
       <div class="vis" id="vis">
         <div class="badge badgeA" id="labelA">Left</div>
         <div class="badge badgeB" id="labelB">Right</div>
         <div class="tooltip" id="tooltip"></div>
 
-        <svg class="basemap" id="basemap" viewBox="0 0 1000 560" role="img" aria-label="World basemap"></svg>
+        <svg
+          class="basemap"
+          id="basemap"
+          viewBox="0 0 1000 560"
+          role="img"
+          aria-label="World basemap">
+        </svg>
 
         <div class="divider" id="divider"></div>
         <div class="handle" id="handle"></div>
