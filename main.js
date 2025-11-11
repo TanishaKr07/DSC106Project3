@@ -514,7 +514,17 @@ function drawMap(canvas, scenario) {
         ctx.fillText(`No data for ${scenario} ${currentYear}`, 20, 60);
         return;
     }
-    
+
+    // 🔹 Scale dot size + opacity based on map size
+    const minMapDim = Math.min(drawWidth, drawHeight);   // how big the map box actually is
+    const scale = minMapDim / 800;                       // 800px → scale ~1
+
+    const baseSize = 3;                                  // base radius-ish
+    const size = baseSize * Math.max(0.5, Math.min(1.5, scale));  // clamp so it never gets huge/tiny
+
+    const baseAlpha = 0.28;
+    const alpha = baseAlpha * Math.max(0.4, Math.min(1.0, scale)); // smaller map → lower alpha
+
     // Draw data points with small, faint circles so the map shows through
     filteredData.forEach(point => {
         let lon = point.lon;
@@ -523,11 +533,10 @@ function drawMap(canvas, scenario) {
         const x = offsetX + ((lon + 180) / 360) * drawWidth;
         const y = offsetY + ((90 - point.lat) / 180) * drawHeight;
 
-        // much smaller dots now
-        const size = Math.max(0.5, width / 900);
-
         const color = getColor(point.pr_mm_day);
-        const transparentColor = color.replace('rgb', 'rgba').replace(')', ', 0.18)');
+        const transparentColor = color
+            .replace('rgb', 'rgba')
+            .replace(')', `, ${alpha})`);
 
         ctx.fillStyle = transparentColor;
         ctx.beginPath();
@@ -543,6 +552,7 @@ function drawMap(canvas, scenario) {
     ctx.fillText(scenario.toUpperCase(), 20, 40);
     ctx.shadowBlur = 0;
 }
+
 
 
 
