@@ -5,6 +5,10 @@ let sliderPosition = 50;
 let isDragging = false;
 const years = [2015, 2020, 2025, 2030, 2035, 2040, 2045, 2050, 2055, 2060, 2065, 2070, 2075, 2080, 2085, 2090, 2095, 2100];
 
+// Precipitation range for color scale (mm/day)
+const PRECIP_MIN = 0.1;
+const PRECIP_MAX = 1.5;
+
 // World map image variables
 let worldMapImage = null;
 let mapImageLoaded = false;
@@ -267,18 +271,27 @@ function updateYearButtons() {
     nextYearBtn.disabled = idx === years.length - 1;
 }
 
-// gray → white color scale
+// Blue sequential precipitation colormap (light → dark blue)
 function getColor(value) {
-    const min = 0.1;
-    const max = 1.5;
-    const t = Math.max(0, Math.min(1, (value - min) / (max - min)));
+    const min = PRECIP_MIN;
+    const max = PRECIP_MAX;
+    const tRaw = (value - min) / (max - min);
+    const t = Math.max(0, Math.min(1, tRaw));
 
-    const low = { r: 128, g: 128, b: 128 };
-    const high = { r: 255, g: 255, b: 255 };
+    const colors = [
+        { r: 247, g: 251, b: 255 }, // very light blue / near white (low)
+        { r: 107, g: 174, b: 214 }, // medium blue
+        { r: 8,   g: 81,  b: 156 }  // dark blue (high)
+    ];
 
-    const r = Math.round(low.r + (high.r - low.r) * t);
-    const g = Math.round(low.g + (high.g - low.g) * t);
-    const b = Math.round(low.b + (high.b - low.b) * t);
+    const idx = t * (colors.length - 1);
+    const i0 = Math.floor(idx);
+    const i1 = Math.min(colors.length - 1, i0 + 1);
+    const f = idx - i0;
+
+    const r = Math.round(colors[i0].r + (colors[i1].r - colors[i0].r) * f);
+    const g = Math.round(colors[i0].g + (colors[i1].g - colors[i0].g) * f);
+    const b = Math.round(colors[i0].b + (colors[i1].b - colors[i0].b) * f);
 
     return `rgb(${r}, ${g}, ${b})`;
 }
@@ -515,15 +528,15 @@ function drawMap(canvas, scenario) {
         return;
     }
 
-    // 🔹 Scale dot size + opacity based on map size
-    const minMapDim = Math.min(drawWidth, drawHeight);   // how big the map box actually is
-    const scale = minMapDim / 800;                       // 800px → scale ~1
+    // Scale dot size + opacity based on map size
+    const minMapDim = Math.min(drawWidth, drawHeight);
+    const scale = minMapDim / 800;
 
-    const baseSize = 3;                                  // base radius-ish
-    const size = baseSize * Math.max(0.5, Math.min(1.5, scale));  // clamp so it never gets huge/tiny
+    const baseSize = 3;
+    const size = baseSize * Math.max(0.5, Math.min(1.5, scale));
 
     const baseAlpha = 0.28;
-    const alpha = baseAlpha * Math.max(0.4, Math.min(1.0, scale)); // smaller map → lower alpha
+    const alpha = baseAlpha * Math.max(0.4, Math.min(1.0, scale));
 
     // Draw data points with small, faint circles so the map shows through
     filteredData.forEach(point => {
@@ -553,9 +566,6 @@ function drawMap(canvas, scenario) {
     ctx.shadowBlur = 0;
 }
 
-
-
-
 function updateMaps() {
     console.log('Updating maps for year:', currentYear);
     drawMap(canvasLeft, 'ssp126');
@@ -563,10 +573,15 @@ function updateMaps() {
 }
 
 function drawColorScale() {
-    for (let i = 0; i < 50; i++) {
+    if (!colorScale) return;
+    colorScale.innerHTML = '';
+
+    const steps = 50;
+    for (let i = 0; i < steps; i++) {
+        const v = PRECIP_MIN + (i / (steps - 1)) * (PRECIP_MAX - PRECIP_MIN);
         const div = document.createElement('div');
         div.style.flex = '1';
-        div.style.backgroundColor = getColor(0.1 + (i / 50) * 1.4);
+        div.style.backgroundColor = getColor(v);
         colorScale.appendChild(div);
     }
 }
