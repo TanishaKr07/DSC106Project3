@@ -66,6 +66,19 @@ function init() {
     // Setup event listeners
     setupEventListeners();
 
+     // 🟦 Add SVG overlay for region selection (brush box)
+    const svgOverlay = d3.select("#mapContainer")
+        .append("svg")
+        .attr("id", "selectionOverlay")
+        .style("position", "absolute")
+        .style("top", 0)
+        .style("left", 0)
+        .style("width", "100%")
+        .style("height", "100%")
+        .style("pointer-events", "none");
+
+    addRegionBrush(svgOverlay);
+
     // Draw color scale
     drawColorScale();
 
@@ -96,6 +109,7 @@ function resizeCanvas() {
         updateMaps();
     }
 }
+
 
 function resizeChart() {
     if (!lineCanvas) return;
@@ -292,6 +306,57 @@ function updateYearButtons() {
     nextYearBtn.disabled = idx === years.length - 1;
 }
 
+function addRegionBrush(svg) {
+    const brush = d3.brush()
+        .extent([[0, 0], [mapContainer.clientWidth, mapContainer.clientHeight]])
+        .on("start brush end", brushed);
+
+    svg.style("pointer-events", "all");
+    svg.call(brush);
+
+    function brushed(event) {
+        const selection = event.selection;
+        if (!selection) return;
+
+        const [[x0, y0], [x1, y1]] = selection;
+
+        // Find all points inside this region for both scenarios
+        const regionData = { ssp126: {}, ssp245: {} };
+
+        for (const scen of ['ssp126', 'ssp245']) {
+            years.forEach(year => {
+                const filtered = data.filter(d =>
+                    d.year === year &&
+                    d.scenario.toLowerCase().includes(scen) &&
+                    isPointInBox(d, x0, y0, x1, y1)
+                );
+
+                if (filtered.length > 0) {
+                    const avg = d3.mean(filtered, d => d.pr_mm_day);
+                    regionData[scen][year] = avg;
+                }
+            });
+        }
+
+        drawRegionalLineChart(regionData);
+    }
+
+    function isPointInBox(d, x0, y0, x1, y1) {
+        // Convert lon/lat to map x,y
+        const rect = mapContainer.getBoundingClientRect();
+        const lon = d.lon > 180 ? d.lon - 360 : d.lon;
+
+        const mapW = rect.width;
+        const mapH = rect.height;
+
+        const px = ((lon + 180) / 360) * mapW;
+        const py = ((90 - d.lat) / 180) * mapH;
+
+        return px >= x0 && px <= x1 && py >= y0 && py <= y1;
+    }
+}
+
+
 // Blue sequential precipitation colormap (light → dark blue)
 function getColor(value) {
     const min = PRECIP_MIN;
@@ -432,6 +497,63 @@ function drawLineChart() {
         const x = xScale(d.year);
         ctx.fillText(d.year, x, y0 + 4);
     });
+
+function drawRegionalLineChart(regionData) {
+    console.log("Drawing regional line chart:", regionData);
+    
+    const ctx = lineCanvas.getContext("2d");
+    const width = lineCanvas.width;
+    const height = lineCanvas.height;
+
+    ctx.fillStyle = "#1a1a2e";
+    ctx.fillRect(0, 0, width, height);
+
+    const x0 = 50, y0 = height - 40, x1 = width - 20, y1 = 30;
+
+    const allVals = [];
+    for (const scen of ['ssp126', 'ssp245']) {
+        for (const y of years) {
+            const v = regionData[scen][y];
+            if (v != null) allVals.push(v);
+        }
+    }
+
+    if (allVals.length === 0) return;
+
+    const minVal = d3.min(allVals);
+    const maxVal = d3.max(allVals);
+
+    const xScale = d3.scaleLinear().domain(d3.extent(years)).range([x0, x1]);
+    const yScale = d3.scaleLinear().domain([minVal, maxVal]).range([y0, y1]);
+
+    function drawLine(scen, color) {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        let started = false;
+        years.forEach(year => {
+            const v = regionData[scen][year];
+            if (v == null) return;
+            const x = xScale(year);
+            const y = yScale(v);
+            if (!started) {
+                ctx.moveTo(x, y);
+                started = true;
+            } else {
+                ctx.lineTo(x, y);
+            }
+        });
+        ctx.stroke();
+    }
+
+    drawLine("ssp126", "#38bdf8");
+    drawLine("ssp245", "#f97316");
+
+    ctx.fillStyle = "white";
+    ctx.font = "14px Arial";
+    ctx.fillText("Regional precipitation (mm/day)", x0, 20);
+}
+
 
     function drawScenarioLine(prop, color, scenarioLabel) {
         ctx.strokeStyle = color;
