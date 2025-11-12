@@ -498,62 +498,6 @@ function drawLineChart() {
         ctx.fillText(d.year, x, y0 + 4);
     });
 
-function drawRegionalLineChart(regionData) {
-    console.log("Drawing regional line chart:", regionData);
-    
-    const ctx = lineCanvas.getContext("2d");
-    const width = lineCanvas.width;
-    const height = lineCanvas.height;
-
-    ctx.fillStyle = "#1a1a2e";
-    ctx.fillRect(0, 0, width, height);
-
-    const x0 = 50, y0 = height - 40, x1 = width - 20, y1 = 30;
-
-    const allVals = [];
-    for (const scen of ['ssp126', 'ssp245']) {
-        for (const y of years) {
-            const v = regionData[scen][y];
-            if (v != null) allVals.push(v);
-        }
-    }
-
-    if (allVals.length === 0) return;
-
-    const minVal = d3.min(allVals);
-    const maxVal = d3.max(allVals);
-
-    const xScale = d3.scaleLinear().domain(d3.extent(years)).range([x0, x1]);
-    const yScale = d3.scaleLinear().domain([minVal, maxVal]).range([y0, y1]);
-
-    function drawLine(scen, color) {
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        let started = false;
-        years.forEach(year => {
-            const v = regionData[scen][year];
-            if (v == null) return;
-            const x = xScale(year);
-            const y = yScale(v);
-            if (!started) {
-                ctx.moveTo(x, y);
-                started = true;
-            } else {
-                ctx.lineTo(x, y);
-            }
-        });
-        ctx.stroke();
-    }
-
-    drawLine("ssp126", "#38bdf8");
-    drawLine("ssp245", "#f97316");
-
-    ctx.fillStyle = "white";
-    ctx.font = "14px Arial";
-    ctx.fillText("Regional precipitation (mm/day)", x0, 20);
-}
-
 
     function drawScenarioLine(prop, color, scenarioLabel) {
         ctx.strokeStyle = color;
@@ -637,6 +581,62 @@ function drawRegionalLineChart(regionData) {
         ctx.stroke();
         ctx.restore();
     }
+}
+
+function drawRegionalLineChart(regionData) {
+    console.log("Drawing regional line chart:", regionData);
+    
+    const ctx = lineCanvas.getContext("2d");
+    const width = lineCanvas.width;
+    const height = lineCanvas.height;
+
+    ctx.fillStyle = "#1a1a2e";
+    ctx.fillRect(0, 0, width, height);
+
+    const x0 = 50, y0 = height - 40, x1 = width - 20, y1 = 30;
+
+    const allVals = [];
+    for (const scen of ['ssp126', 'ssp245']) {
+        for (const y of years) {
+            const v = regionData[scen][y];
+            if (v != null) allVals.push(v);
+        }
+    }
+
+    if (allVals.length === 0) return;
+
+    const minVal = d3.min(allVals);
+    const maxVal = d3.max(allVals);
+
+    const xScale = d3.scaleLinear().domain(d3.extent(years)).range([x0, x1]);
+    const yScale = d3.scaleLinear().domain([minVal, maxVal]).range([y0, y1]);
+
+    function drawLine(scen, color) {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        let started = false;
+        years.forEach(year => {
+            const v = regionData[scen][year];
+            if (v == null) return;
+            const x = xScale(year);
+            const y = yScale(v);
+            if (!started) {
+                ctx.moveTo(x, y);
+                started = true;
+            } else {
+                ctx.lineTo(x, y);
+            }
+        });
+        ctx.stroke();
+    }
+
+    drawLine("ssp126", "#38bdf8");
+    drawLine("ssp245", "#f97316");
+
+    ctx.fillStyle = "white";
+    ctx.font = "14px Arial";
+    ctx.fillText("Regional precipitation (mm/day)", x0, 20);
 }
 
 function drawMap(canvas, scenario) {
